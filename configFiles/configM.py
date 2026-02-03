@@ -2,7 +2,7 @@ from configFiles.terrain_config import configT
 from configFiles.disp_config import disp_settings
 from configFiles.drone_config import drone_config
 W,H,number_of_drone=disp_settings()
-hills,LAYERS,CENTERS,BASE_RADIUS,LAYER_GAP,NOISE_FREQ,NOISE_AMP= configT(W,H)
+hills,LAYERS,CENTERS,BASE_RADIUS,LAYER_GAP,NOISE_FREQ,NOISE_AMP,transmitter_tower_height,receiver_tower_height= configT(W,H)
 drone_x = []
 drone_y = []
 drone_z = []

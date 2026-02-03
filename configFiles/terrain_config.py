@@ -5,8 +5,9 @@ def configT(W,H):
     CENTERS = [(0,0),(800,600)]
     BASE_RADIUS = [100,100]
     attempts = 0
-    max_attempts = 1000  # to avoid infinite loop
-
+    max_attempts = 1000  
+    transmitter_tower_height=random.randint(20,70)
+    receiver_tower_height=random.randint(20,70)
     while len(CENTERS) < hills+5 and attempts < max_attempts:
         attempts += 1
         r = random.randint(30, 150)
@@ -30,4 +31,4 @@ def configT(W,H):
     LAYER_GAP = [BASE_RADIUS[h]/LAYERS[h]-1 for h in range(hills)]       # distance between layers
     NOISE_FREQ = [random.uniform(0.04,0.07) for _ in range(hills)]
     NOISE_AMP = [random.randint(4,5) for _ in range(hills)]
-    return hills,LAYERS,CENTERS,BASE_RADIUS,LAYER_GAP,NOISE_FREQ,NOISE_AMP
+    return hills,LAYERS,CENTERS,BASE_RADIUS,LAYER_GAP,NOISE_FREQ,NOISE_AMP,transmitter_tower_height,receiver_tower_height
