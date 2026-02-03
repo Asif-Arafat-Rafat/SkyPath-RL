@@ -18,14 +18,14 @@ overlay = pygame.Surface((W, H), pygame.SRCALPHA)  # <-- SRCALPHA allows transpa
 running = True
 while running:
     clock.tick(60)
-    for e in pygame.event.get():
+    for e in pygame.event.get(): 
         if e.type == pygame.QUIT:
             running = False
 
     screen.fill((20, 20, 20))
 
     draw_terrain(screen,font)
-    drone_draw(screen)
+    drone_draw(screen,font,overlay)
 
     pygame.display.flip()
 
