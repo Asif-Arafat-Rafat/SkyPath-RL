@@ -1,5 +1,8 @@
 def drone_config(n=0):
-    drone_x,drone_y,drone_z=50+30*n,50,10
-    speed=20
-    range=200
-    return drone_x,drone_y,drone_z,speed,range
+    drones=[]
+    for i in range(n):
+        drone_x,drone_y,drone_z=50+30*i,50,10
+        drones.append([drone_x,drone_y,drone_z])
+    speed=2
+    range_=200
+    return drones,speed,range_

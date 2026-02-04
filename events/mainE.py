@@ -1,5 +1,5 @@
 import pygame
-
+import configFiles.configM as cf
 def main_event(state):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -11,3 +11,15 @@ def main_event(state):
                 state['tower_connection']=not state['tower_connection']
             if event.key == pygame.K_TAB:
                 state['selected_drone']+=1
+            if event.key == pygame.K_UP:
+                cf.drones[state['selected_drone']][1]-=cf.speed
+            if event.key == pygame.K_DOWN:
+                cf.drones[state['selected_drone']][1]+=cf.speed
+            if event.key == pygame.K_LEFT:
+                cf.drones[state['selected_drone']][0]-=cf.speed
+            if event.key == pygame.K_RIGHT:
+                cf.drones[state['selected_drone']][0]+=cf.speed
+            if event.key == pygame.K_q:
+                cf.drones[state['selected_drone']][2]+=cf.speed
+            if event.key == pygame.K_e:
+                cf.drones[state['selected_drone']][2]-=cf.speed
