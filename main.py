@@ -1,6 +1,5 @@
 import pygame
 import math
-from noise import pnoise1
 import random
 import configFiles.configM as cf
 from elements.terrain import draw_terrain

@@ -23,3 +23,11 @@ def main_event(state):
                 cf.drones[state['selected_drone']][2]+=cf.speed
             if event.key == pygame.K_e:
                 cf.drones[state['selected_drone']][2]-=cf.speed
+            if event.key == pygame.K_EQUALS:
+                cf.tolerance+=0.5
+                cf.los=False
+            if event.key == pygame.K_MINUS:
+                cf.tolerance-=0.5
+                cf.los=False
+                if cf.tolerance<0:
+                    cf.tolerance=0
