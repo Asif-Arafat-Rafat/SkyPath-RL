@@ -1,7 +1,8 @@
 import random 
 import math
 def configT(W,H):
-    hills = random.randint(7, 10)
+    hills = random.randint(10, 15)
+    scale=10 
     CENTERS = [(0,0),(800,600)]
     BASE_RADIUS = [100,100]
     attempts = 0
@@ -32,4 +33,4 @@ def configT(W,H):
     LAYER_GAP = [BASE_RADIUS[h]/LAYERS[h]-1 for h in range(hills)]       # distance between layers
     NOISE_FREQ = [random.uniform(0.04,0.07) for _ in range(hills)]
     NOISE_AMP = [random.randint(4,5) for _ in range(hills)]
-    return hills,LAYERS,CENTERS,BASE_RADIUS,LAYER_GAP,NOISE_FREQ,NOISE_AMP,transmitter_tower_height,receiver_tower_height,distance
+    return hills,LAYERS,CENTERS,BASE_RADIUS,LAYER_GAP,NOISE_FREQ,NOISE_AMP,transmitter_tower_height,receiver_tower_height,distance,scale
