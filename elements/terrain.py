@@ -5,6 +5,7 @@ from noise import pnoise1
 import configFiles.configM as cf
 import random
 import json 
+import os
 shown=0
 inter=[]
 hill=cf.hills
@@ -13,6 +14,7 @@ dist=[]
 visited=[]
 heights=[]
 done=False
+TERRAIN_DATA_FILE = "terrain_data.json"
 def line_of_sight_validation(x, y):
     return abs(y - (35 + 530/730*(x - 35))) < cf.tolerance
 
@@ -90,4 +92,34 @@ def draw_terrain(screen,font,overlay,tower_connection=False):
     done=True
     lst=[sub for sub in inter_points if sub]
     result = [sub if len(sub) <= 2 else [sub[0], sub[-1]] for sub in lst]
+    
+    # Save terrain data to JSON
+    save_terrain_data(result, visited, heights)
+    
     return result,visited,heights
+
+def save_terrain_data(inter_points, visited, heights):
+    """Save terrain data to JSON file."""
+    terrain_data = {
+        "intersection_points": inter_points,
+        "visited_hills": visited,
+        "heights": heights
+    }
+    try:
+        with open(TERRAIN_DATA_FILE, 'w') as f:
+            json.dump(terrain_data, f, indent=2)
+        print(f"Terrain data saved to {TERRAIN_DATA_FILE}")
+    except Exception as e:
+        print(f"Error saving terrain data: {e}")
+
+def load_terrain_data():
+    """Load terrain data from JSON file."""
+    try:
+        if os.path.exists(TERRAIN_DATA_FILE):
+            with open(TERRAIN_DATA_FILE, 'r') as f:
+                data = json.load(f)
+            print(f"Terrain data loaded from {TERRAIN_DATA_FILE}")
+            return data
+    except Exception as e:
+        print(f"Error loading terrain data: {e}")
+    return None
