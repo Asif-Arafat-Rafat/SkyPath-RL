@@ -7,6 +7,8 @@ from elements.drone_controller import DroneController, draw_drone_with_rl
 from elements.signal_viz import SignalVisualizer
 from elements.data_panel import DataPanel
 from elements.chart_logger import ChartLogger
+from elements.upgrade_tracker import UpgradeTracker
+from elements.episode_stats import EpisodeStatsLogger
 import controls.controlM as con
 from events.mainE import main_event
 pygame.init()
@@ -15,17 +17,20 @@ W, H = cf.W, cf.H
 # Create signal visualization with larger height for dual path display
 signal_viz = SignalVisualizer(width=400, height=600, offset_x=W, offset_y=0)
 
-# Create data panel for metrics
-data_panel = DataPanel(width=400, height=600, offset_x=W + 400, offset_y=0)
+# Create semi-transparent overlay data panel (renders on top of simulation)
+data_panel = DataPanel(width=350, height=280)
 
 # Create chart logger
 chart_logger = ChartLogger(log_dir="communication_logs")
+upgrade_tracker = UpgradeTracker(store_file="communication_logs/upgrade_index.json")
+episode_stats_logger = EpisodeStatsLogger(log_file="communication_logs/episode_stats.json")
 chart_image_surf = None
 chart_interval = 60  # frames between chart renders
 chart_tick = 0
+chart_path = None
 
-# Create a larger display to show terrain, signal, and data windows
-display_width = W + signal_viz.width + data_panel.width
+# Create display to show terrain and signal windows
+display_width = W + signal_viz.width
 display_height = max(H, signal_viz.height)
 main_display = pygame.display.set_mode((display_width, display_height))
 pygame.display.set_caption("Drone Relay Optimization - Terrain & Signal Analysis")
@@ -74,7 +79,10 @@ train_reward_threshold = 5.0  # if avg reward >= this, stop training that drone
 state = {
     'running': True,
     'tower_connection': False,
-    'selected_drone': 0
+    'selected_drone': 0,
+    'data_mode': 1,  # Data panel mode (1, 2, 3, 4)
+    'show_data_panel': True,
+    'data_expanded': False
 }
 
 running = True
@@ -194,10 +202,27 @@ while state["running"]:
             # Print stats for selected drone
             selected_drone_idx = state['selected_drone'] % cf.number_of_drone
             selected_stats = stats.get(f"drone_{selected_drone_idx}", {})
+            
+            reward = selected_stats.get('episode_reward', 0)
+            exploration = selected_stats.get('epsilon', 0)
+            q_states = selected_stats.get('q_table_size', 0)
+            
             print(f"Episode {total_episodes} Complete - Drone {selected_drone_idx}: "
-                  f"Reward={selected_stats.get('episode_reward', 0):.1f}, "
-                  f"Exploration={selected_stats.get('epsilon', 0):.3f}, "
-                  f"States={selected_stats.get('q_table_size', 0)}")
+                  f"Reward={reward:.1f}, "
+                  f"Exploration={exploration:.3f}, "
+                  f"States={q_states}")
+            
+            # Log episode statistics to persistent storage
+            try:
+                episode_stats_logger.log_episode(
+                    episode_num=total_episodes,
+                    drone_id=selected_drone_idx,
+                    reward=reward,
+                    exploration=exploration,
+                    states=q_states
+                )
+            except Exception as e:
+                print(f"Error logging episode stats: {e}")
     
     # Fill main display with background
     main_display.fill((20, 20, 20))
@@ -209,8 +234,21 @@ while state["running"]:
     signal_viz.draw_signal_visualization(main_display, tx_power_dbm, current_path_loss, current_drone_relay_loss)
     signal_viz.update()
     
-    # Draw data panel with clear metrics comparison
-    data_panel.draw_data_comparison(main_display, tx_power_dbm, current_path_loss, current_drone_relay_loss, cf.drones)
+    # Draw semi-transparent overlay data panel on top of simulation (if visible)
+    data_panel.set_mode(state['data_mode'])
+    # Expand overlay to full terrain when expanded flag set
+    if state.get('data_expanded', False):
+        data_panel.set_expanded(True, width=W, height=H, offset_x=0, offset_y=0)
+        data_panel.visible = True
+    else:
+        data_panel.set_expanded(False)
+        data_panel.visible = state.get('show_data_panel', True)
+
+    if data_panel.visible:
+        # provide chart path to panel so it can render inside selected modes
+        if upgrade_tracker.get_latest():
+            data_panel.set_chart_path(upgrade_tracker.get_latest())
+        data_panel.draw_data(main_display, tx_power_dbm, current_path_loss, current_drone_relay_loss, cf.drones, drone_controller)
     
     # Log communication data for chart (per drone) and periodically render latest chart
     if enable_rl_training and cf.drones and len(cf.drones) > 0:
@@ -238,23 +276,17 @@ while state["running"]:
             try:
                 chart_path = chart_logger.render_latest_chart()
                 if chart_path:
+                    # register chart with upgrade tracker and pass to overlay for in-mode rendering
                     try:
-                        chart_image_surf = pygame.image.load(chart_path).convert()
+                        upgrade_tracker.register(chart_path)
+                        chart_path = chart_path
                     except Exception as e:
-                        print(f"Error loading chart image: {e}")
+                        print(f"Error registering chart: {e}")
             except Exception as e:
                 print(f"Error rendering latest chart: {e}")
 
-        # Blit chart image if available
-        if chart_image_surf:
-            try:
-                # scale to fit signal panel width
-                chart_w = signal_viz.width
-                chart_h = min(signal_viz.height // 2, chart_image_surf.get_height())
-                scaled = pygame.transform.smoothscale(chart_image_surf, (chart_w, chart_h))
-                main_display.blit(scaled, (W, 0))
-            except Exception:
-                pass
+        # NOTE: chart image used only by overlay modes; do not blit directly to main display here
+
     
     # Draw training status
     if enable_rl_training:
